@@ -85,6 +85,18 @@ module Vagrant
     @actions ||= Vagrant::Action::Builtin.new
   end
 
+  # Called by Vagrantfiles to configure Vagrant. This takes a mandatory
+  # `version` parameter to specify what version of the configuration is
+  # being used.
+  #
+  # If the old `Vagrant::Config.run` syntax is used, then version 1 is
+  # assumed.
+  #
+  # @param [String] version Version of the configuration.
+  def self.configure(version, &block)
+    Config.run(version, &block)
+  end
+
   # The source root is the path to the root directory of
   # the Vagrant gem.
   def self.source_root

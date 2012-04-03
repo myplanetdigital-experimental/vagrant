@@ -5,6 +5,16 @@ describe Vagrant do
     described_class.source_root.should == Pathname.new(File.expand_path("../../../", __FILE__))
   end
 
+  it "has a shortcut for configuring" do
+    fake_proc = Proc.new {}
+
+    procs = Vagrant::Config.capture_configures do
+      described_class.configure("2", &fake_proc)
+    end
+
+    procs.should == [["2", fake_proc]]
+  end
+
   it "has a registry for commands" do
     described_class.commands.should be_a(Vagrant::Registry)
   end
