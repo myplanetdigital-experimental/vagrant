@@ -4,6 +4,7 @@ module Vagrant
     autoload :Container,     'vagrant/config/container'
     autoload :ErrorRecorder, 'vagrant/config/error_recorder'
     autoload :Loader,        'vagrant/config/loader'
+    autoload :ProcLoader,    'vagrant/config/proc_loader'
     autoload :Top,           'vagrant/config/top'
 
     autoload :NFSConfig,     'vagrant/config/nfs'
