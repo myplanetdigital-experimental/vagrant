@@ -111,9 +111,12 @@ module Vagrant
           @logger.debug("Load procs for pathname: #{source.inspect}")
 
           begin
-            return Config.capture_configures do
-              Kernel.load source
-            end
+            # Currently `capture_configures` returns an array of 2-tuples
+            # in the format of [version, proc]. This class was only made
+            # for version 1 and will be removed soon but in order to keep
+            # master working, we work around it.
+            procs = Config.capture_configures { Kernel.load(source) }
+            return procs.map { |p| p[1] }
           rescue SyntaxError => e
             # Report syntax errors in a nice way.
             raise Errors::VagrantfileSyntaxError, :file => e.message

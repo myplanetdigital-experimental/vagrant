@@ -20,10 +20,14 @@ module Vagrant
     #
     # Note that the block is not run immediately. Instead, it's proc is stored
     # away for execution later.
-    def self.run(&block)
+    def self.run(version=nil, &block)
+      # If the version isn't specified, we assume version 1.0, since prior to
+      # 1.0 this didn't take a version parameter.
+      version ||= "1"
+
       # Store it for later
       @last_procs ||= []
-      @last_procs << block
+      @last_procs << [version, block]
     end
 
     # This is a method which will yield to a block and will capture all
@@ -32,6 +36,8 @@ module Vagrant
     # Wrapping this around anytime you call code which loads configurations
     # will force a mutex so that procs never get mixed up. This keeps
     # the configuration loading part of Vagrant thread-safe.
+    #
+    # @return [Array] Array of procs in the format `[version, block]`.
     def self.capture_configures
       CONFIGURE_MUTEX.synchronize do
         # Reset the last procs so that we start fresh
