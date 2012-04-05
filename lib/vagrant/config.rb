@@ -13,6 +13,10 @@ module Vagrant
     autoload :VagrantConfig, 'vagrant/config/vagrant'
     autoload :VMConfig,      'vagrant/config/vm'
 
+    module V1
+      autoload :Loader, 'vagrant/config/v1/loader'
+    end
+
     CONFIGURE_MUTEX = Mutex.new
 
     # This is the method which is called by all Vagrantfiles to configure Vagrant.
