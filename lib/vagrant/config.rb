@@ -15,6 +15,7 @@ module Vagrant
 
     module V1
       autoload :Loader, 'vagrant/config/v1/loader'
+      autoload :Structure, 'vagrant/config/v1/structure'
     end
 
     CONFIGURE_MUTEX = Mutex.new

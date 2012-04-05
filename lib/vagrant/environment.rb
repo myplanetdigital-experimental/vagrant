@@ -2,6 +2,7 @@ require 'pathname'
 require 'fileutils'
 
 require 'log4r'
+require 'omniconfig'
 require 'rubygems'  # This is needed for plugin loading below.
 
 require 'vagrant/util/file_mode'
@@ -344,52 +345,33 @@ module Vagrant
     # this environment, meaning that it will use the given root directory
     # to load the Vagrantfile into that context.
     def load_config!
-      # Initialize the config loader
-      config_loader = Config::Loader.new
-      config_loader.load_order = [:default, :box, :home, :root, :vm]
+      # This stores all our procs by some key
+      procs = {}
+      #config_loader.load_order = [:default, :box, :home, :root, :vm]
 
-      inner_load = lambda do |*args|
-        # This is for Ruby 1.8.7 compatibility. Ruby 1.8.7 doesn't allow
-        # default arguments for lambdas, so we get around by doing a *args
-        # and setting the args here.
-        subvm = args[0]
-        box   = args[1]
+      # The proc loader is responsible for loading procs from various
+      # Vagrantfiles.
+      proc_loader = Config::ProcLoader.new
+      procs[:default] = proc_loader.load(File.expand_path("config/default.rb", Vagrant.source_root))
 
-        # Default Vagrantfile first. This is the Vagrantfile that ships
-        # with Vagrant.
-        config_loader.set(:default, File.expand_path("config/default.rb", Vagrant.source_root))
-
-        if box
-          # We load the box Vagrantfile
-          box_vagrantfile = find_vagrantfile(box.directory)
-          config_loader.set(:box, box_vagrantfile) if box_vagrantfile
-        end
-
-        if home_path
-          # Load the home Vagrantfile
-          home_vagrantfile = find_vagrantfile(home_path)
-          config_loader.set(:home, home_vagrantfile) if home_vagrantfile
-        end
-
-        if root_path
-          # Load the Vagrantfile in this directory
-          root_vagrantfile = find_vagrantfile(root_path)
-          config_loader.set(:root, root_vagrantfile) if root_vagrantfile
-        end
-
-        if subvm
-          # We have subvm configuration, so set that up as well.
-          config_loader.set(:vm, subvm.proc_stack)
-        end
-
-        # Execute the configuration stack and store the result as the final
-        # value in the config ivar.
-        config_loader.load
+      if home_path && !procs.has_key?(:home)
+        # Load the home Vagrantfile
+        home_vagrantfile = find_vagrantfile(home_path)
+        procs[:home] = home_vagrantfile ? proc_loader.load(home_vagrantfile) : nil
       end
 
-      # For the global configuration, we only need to load the configuration
-      # in a single pass, since nothing is conditional on the configuration.
-      global = inner_load.call
+      if root_path && !procs.has_key?(:root)
+        # Load the Vagrantfile in this directory
+        root_vagrantfile = find_vagrantfile(root_path)
+        procs[:root] = root_vagrantfile ? proc_loader.load(root_vagrantfile) : nil
+      end
+
+      # Load the global configuration, which is the configuration not counting
+      # the possible needs of specific sub-vms.
+      load_order = [:home, :root]
+      global = load_config_from_procs(procs, load_order)
+      @config = Config::Container.new(global, [])
+      return
 
       # For each virtual machine represented by this environment, we have
       # to load the configuration in two-passes. We do this because the
@@ -423,6 +405,27 @@ module Vagrant
 
       # Finally, we have our configuration. Set it and forget it.
       @config = Config::Container.new(global, vm_configs)
+    end
+
+    # Loads configuration from a set of procs in the given order. This is used
+    # internally and shouldn't be called by the general public in any circumstance.
+    #
+    # @param [Hash] procs Hash of procs.
+    # @param [Array] load_order Order to load the procs.
+    # @return [Hash]
+    def load_config_from_procs(procs, load_order)
+      # For now we assume version 1 configuration. This will need to be changed
+      # in the future.
+      loader = OmniConfig.new(Config::V1::Structure.new)
+      load_order.each do |key|
+        (procs[key] || []).each do |_version, config_proc|
+          # We ignore the version for now.
+          loader.add_loader(Config::V1::Loader.new(config_proc))
+        end
+      end
+
+      # Return the result
+      loader.load
     end
 
     # Loads the persisted VM (if it exists) for this environment.

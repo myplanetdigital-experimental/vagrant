@@ -5,8 +5,26 @@ require "vagrant/config/v1/config"
 describe Vagrant::Config::V1::Config do
   let(:instance) { described_class.new }
 
+  it "has a VagrantConfig object" do
+    instance.vagrant.should be_kind_of(Vagrant::Config::V1::VagrantConfig)
+  end
+
   it "has a VMConfig object" do
     instance.vm.should be_kind_of(Vagrant::Config::V1::VMConfig)
+  end
+end
+
+describe Vagrant::Config::V1::VagrantConfig do
+  let(:instance) { described_class.new }
+
+  it "converts to the proper internal structure" do
+    instance.dotfile_name = "foo"
+    instance.host = "bar"
+
+    instance.to_internal_structure.should == {
+      "dotfile_name" => "foo",
+      "host"         => "bar"
+    }
   end
 end
 
