@@ -416,7 +416,8 @@ module Vagrant
     def load_config_from_procs(procs, load_order)
       # For now we assume version 1 configuration. This will need to be changed
       # in the future.
-      loader = OmniConfig.new(Config::V1::Structure.new)
+      loader = OmniConfig.new(Config::V1::Structure.new,
+                              :result_class => Config::HashWrapper)
       load_order.each do |key|
         (procs[key] || []).each do |_version, config_proc|
           # We ignore the version for now.

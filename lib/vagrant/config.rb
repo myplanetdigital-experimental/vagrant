@@ -3,6 +3,7 @@ module Vagrant
     autoload :Base,          'vagrant/config/base'
     autoload :Container,     'vagrant/config/container'
     autoload :ErrorRecorder, 'vagrant/config/error_recorder'
+    autoload :HashWrapper,   'vagrant/config/hash_wrapper'
     autoload :Loader,        'vagrant/config/loader'
     autoload :ProcLoader,    'vagrant/config/proc_loader'
     autoload :Top,           'vagrant/config/top'
