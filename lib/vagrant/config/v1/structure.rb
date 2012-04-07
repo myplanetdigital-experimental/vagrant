@@ -23,6 +23,7 @@ module Vagrant
             s.define("name", OmniConfig::Type::String)
             s.define("box", OmniConfig::Type::String)
             s.define("box_url", OmniConfig::Type::String)
+            s.define("primary", OmniConfig::Type::Bool)
           end
 
           # Define members of this structure
