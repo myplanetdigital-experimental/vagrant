@@ -132,7 +132,7 @@ module Vagrant
     # @return [Array<VM>]
     def vms_ordered
       return @vms.values if !multivm?
-      @vms_enum ||= config.global.vm.defined_vm_keys.map { |name| @vms[name] }
+      @vms_enum ||= config.global.vms.map { |vm| vm["name"] }
     end
 
     # Returns the primary VM associated with this environment. This
@@ -143,8 +143,8 @@ module Vagrant
     def primary_vm
       return vms.values.first if !multivm?
 
-      config.global.vm.defined_vms.each do |name, subvm|
-        return vms[name] if subvm.options[:primary]
+      config.global.vms.each do |vm|
+        return vms[vm["name"]] if vm["primary"]
       end
 
       nil
