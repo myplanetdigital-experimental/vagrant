@@ -66,21 +66,12 @@ module Vagrant
         end
 
         def to_internal_structure_flat(parent=nil)
-          result = {
+          {
             "name"    => @name,
             "box"     => @box,
             "box_url" => @box_url,
             "primary" => @primary
           }
-
-          # Handle inheritance
-          if parent
-            result.each do |key, value|
-              result[key] = parent[key] if result[key].nil? && parent[key]
-            end
-          end
-
-          result
         end
 
         def to_internal_structure
@@ -89,13 +80,13 @@ module Vagrant
             # We are the only VM. This is good.
             vms << to_internal_structure_flat
           else
-            # Get our flat internals for inheritance
-            parent = to_internal_structure_flat
-
             # We have multiple VMs, so just get them in the array in the
-            # right order, properly inheriting.
+            # right order. Note that we don't deal with inheritance. In our
+            # view of the world, there is no such thing. Ruby Vagrantfiles
+            # do support inheritance however, and that is handled by the
+            # config loader itself.
             @defined_vms_order.each do |name|
-              vms << @defined_vms[name].to_internal_structure_flat(parent)
+              vms << @defined_vms[name].to_internal_structure_flat
             end
           end
 

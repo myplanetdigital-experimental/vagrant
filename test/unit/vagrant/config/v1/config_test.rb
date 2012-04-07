@@ -59,14 +59,4 @@ describe Vagrant::Config::V1::VMConfig do
     result[0]["name"].should == "foo"
     result[1]["name"].should == "bar"
   end
-
-  it "should properly inherit parent settings for a sub-VM" do
-    instance.box = "foo"
-    instance.define("subvm")
-
-    result = instance.to_internal_structure
-    result.length.should == 1
-    result[0]["name"].should == "subvm"
-    result[0]["box"].should == "foo"
-  end
 end
