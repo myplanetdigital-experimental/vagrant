@@ -72,8 +72,13 @@ module Vagrant
       # The `config.vm` object.
       class VMConfig
         attr_accessor :name
+        attr_accessor :auto_port_range
         attr_accessor :box
         attr_accessor :box_url
+        attr_accessor :base_mac
+        attr_accessor :boot_mode
+        attr_accessor :guest
+        attr_accessor :host_name
         attr_accessor :primary
 
         def initialize
@@ -101,8 +106,13 @@ module Vagrant
         def to_internal_structure_flat(parent=nil)
           {
             "name"    => @name,
+            "auto_port_range" => @auto_port_range,
+            "base_mac" => @base_mac,
+            "boot_mode" => @boot_mode,
             "box"     => @box,
             "box_url" => @box_url,
+            "guest"   => @guest,
+            "host_name" => @host_name,
             "primary" => @primary
           }
         end

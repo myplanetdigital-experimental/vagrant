@@ -368,7 +368,7 @@ module Vagrant
 
       # Load the global configuration, which is the configuration not counting
       # the possible needs of specific sub-vms.
-      load_order = [:home, :root]
+      load_order = [:default, :home, :root]
       global = load_config_from_procs(procs, load_order)
       @config = Config::Container.new(global, [])
       return

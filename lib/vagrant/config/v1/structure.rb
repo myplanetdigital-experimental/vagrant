@@ -35,9 +35,13 @@ module Vagrant
 
           # This represents a single VM within the configuration
           vm_type = OmniConfig::Structure.new do |s|
-            s.define("name", OmniConfig::Type::String)
+            s.define("auto_port_range", OmniConfig::Type::List.new(OmniConfig::Type::Integer))
+            s.define("base_mac", OmniConfig::Type::String)
+            s.define("boot_mode", OmniConfig::Type::String)
             s.define("box", OmniConfig::Type::String)
             s.define("box_url", OmniConfig::Type::String)
+            s.define("guest", OmniConfig::Type::String)
+            s.define("name", OmniConfig::Type::String)
             s.define("primary", OmniConfig::Type::Bool)
           end
 
