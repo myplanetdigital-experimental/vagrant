@@ -12,6 +12,21 @@ module Vagrant
         def initialize
           super
 
+          # This represents the global `ssh` configuration
+          ssh_type = OmniConfig::Structure.new do |s|
+            s.define("username", OmniConfig::Type::String)
+            s.define("password", OmniConfig::Type::String)
+            s.define("host", OmniConfig::Type::String)
+            s.define("port", OmniConfig::Type::Integer)
+            s.define("guest_port", OmniConfig::Type::Integer)
+            s.define("max_tries", OmniConfig::Type::Integer)
+            s.define("timeout", OmniConfig::Type::Integer)
+            s.define("private_key_path", OmniConfig::Type::String)
+            s.define("forward_agent", OmniConfig::Type::Bool)
+            s.define("forward_x11", OmniConfig::Type::Bool)
+            s.define("shell", OmniConfig::Type::String)
+          end
+
           # This represents the global `vagrant` configuration
           vagrant_type = OmniConfig::Structure.new do |s|
             s.define("dotfile_name", OmniConfig::Type::String)

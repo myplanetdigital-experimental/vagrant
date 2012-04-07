@@ -6,19 +6,52 @@ module Vagrant
       # is to provide a configuration API while translating down to the proper
       # OmniConfig schema at the end of the day.
       class Config
+        attr_reader :ssh
         attr_reader :vagrant
         attr_reader :vm
 
         def initialize
+          @ssh     = SSHConfig.new
           @vagrant = VagrantConfig.new
           @vm = VMConfig.new
         end
 
         def to_internal_structure
-          # XXX: For now we only support 1 VM
           {
+            "ssh"     => @ssh.to_internal_structure,
             "vagrant" => @vagrant.to_internal_structure,
             "vms"     => @vm.to_internal_structure
+          }
+        end
+      end
+
+      # The `config.ssh` object.
+      class SSHConfig
+        attr_accessor :username
+        attr_accessor :password
+        attr_accessor :host
+        attr_accessor :port
+        attr_accessor :guest_port
+        attr_accessor :max_tries
+        attr_accessor :timeout
+        attr_accessor :private_key_path
+        attr_accessor :forward_agent
+        attr_accessor :forward_x11
+        attr_accessor :shell
+
+        def to_internal_structure
+          {
+            "username" => @username,
+            "password" => @password,
+            "host"     => @host,
+            "port"     => @port,
+            "guest_port" => @guest_port,
+            "max_tries" => @max_tries,
+            "timeout"  => @timeout,
+            "private_key_path" => @private_key_path,
+            "forward_agent" => @forward_agent,
+            "forward_x11"   => @forward_x11,
+            "shell"         => @shell
           }
         end
       end
