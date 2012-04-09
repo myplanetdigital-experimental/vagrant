@@ -7,20 +7,50 @@ module Vagrant
       # OmniConfig schema at the end of the day.
       class Config
         attr_reader :ssh
+        attr_reader :nfs
+        attr_reader :package
         attr_reader :vagrant
         attr_reader :vm
 
         def initialize
+          @nfs     = NFSConfig.new
+          @package = PackageConfig.new
           @ssh     = SSHConfig.new
           @vagrant = VagrantConfig.new
-          @vm = VMConfig.new
+          @vm      = VMConfig.new
         end
 
         def to_internal_structure
           {
+            "nfs"     => @nfs.to_internal_structure,
+            "package" => @package.to_internal_structure,
             "ssh"     => @ssh.to_internal_structure,
             "vagrant" => @vagrant.to_internal_structure,
             "vms"     => @vm.to_internal_structure
+          }
+        end
+      end
+
+      # The `config.nfs` object.
+      class NFSConfig
+        attr_accessor :map_uid
+        attr_accessor :map_gid
+
+        def to_internal_structure
+          {
+            "map_uid" => @map_uid,
+            "map_gid" => @map_gid
+          }
+        end
+      end
+
+      # The `config.package` object.
+      class PackageConfig
+        attr_accessor :name
+
+        def to_internal_structure
+          {
+            "name" => @name
           }
         end
       end
@@ -84,8 +114,13 @@ module Vagrant
         def initialize
           @defined_vms = {}
           @defined_vms_order = []
+          @forwarded_ports = []
+          @shared_folders = {}
         end
 
+        # Define a sub-VM. This takes a block which will be called
+        # with another `config` object. The config object can be used
+        # to specifically configure that virtual machine.
         def define(name, options=nil, &block)
           name    = name.to_s
           options ||= {}
@@ -103,7 +138,46 @@ module Vagrant
           @defined_vms_order << name
         end
 
-        def to_internal_structure_flat(parent=nil)
+        def forward_port(guestport, hostport, options=nil)
+          # Stringify the keys of the options hash
+          options ||= {}
+          options.keys.each do |key|
+            options[key.to_s] = options[key]
+          end
+
+          # Store the forwarded port definition
+          @forwarded_ports << {
+            "name"       => "#{guestport.to_s(32)}-#{hostport.to_s(32)}",
+            "guestport"  => guestport,
+            "hostport"   => hostport,
+            "protocol"   => :tcp,
+            "adapter"    => 1,
+            "auto"       => false
+          }.merge(options || {})
+        end
+
+        def share_folder(name, guestpath, hostpath, options=nil)
+          # Stringify the keys of the options hash
+          options ||= {}
+          options.keys.each do |key|
+            options[key.to_s] = options[key]
+          end
+
+          @shared_folders[name] = {
+            "guestpath" => guestpath.to_s,
+            "hostpath" => hostpath.to_s,
+            "create" => false,
+            "owner" => nil,
+            "group" => nil,
+            "nfs"   => false,
+            "transient" => false,
+            "extra" => nil
+          }.merge(options || {})
+        end
+
+        # Convert to the "flat" internal structure that is used for
+        # only one virtual machine.
+        def to_internal_structure_flat
           {
             "name"    => @name,
             "auto_port_range" => @auto_port_range,
@@ -111,12 +185,17 @@ module Vagrant
             "boot_mode" => @boot_mode,
             "box"     => @box,
             "box_url" => @box_url,
+            "forwarded_ports" => @forwarded_ports,
             "guest"   => @guest,
             "host_name" => @host_name,
-            "primary" => @primary
+            "primary" => @primary,
+            "shared_folders" => @shared_folders.values
           }
         end
 
+        # Convert to the internal structure. This will return an array of
+        # virtual machine configurations; one for each defined virtual
+        # machine.
         def to_internal_structure
           vms = []
           if @defined_vms.empty?
