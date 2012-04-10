@@ -296,7 +296,9 @@ module Vagrant
     # Config Methods
     #---------------------------------------------------------------
 
-    # The configuration that is global.
+    # The configuration from the global scope of the Vagrantfiles.
+    #
+    # @return [Hash]
     def config_global
       load! if !loaded?
       @config_global

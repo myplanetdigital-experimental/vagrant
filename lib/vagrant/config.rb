@@ -4,7 +4,6 @@ module Vagrant
     autoload :Container,     'vagrant/config/container'
     autoload :ErrorRecorder, 'vagrant/config/error_recorder'
     autoload :HashWrapper,   'vagrant/config/hash_wrapper'
-    autoload :Loader,        'vagrant/config/loader'
     autoload :ProcLoader,    'vagrant/config/proc_loader'
     autoload :Structure,     'vagrant/config/structure'
 
