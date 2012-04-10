@@ -371,7 +371,7 @@ module Vagrant
       # box and the specific configuration for that VM.
       @config_by_vm = {}
       global["vms"].each do |vm_config|
-        name = (vm_config["name"] || DEFAULT_VM).to_sym
+        name = vm_config["id"].to_sym
 
         @logger.debug("Loading configuration for VM: #{name}...")
         @logger.debug("Raw VM config: #{vm_config.inspect}")
@@ -395,7 +395,7 @@ module Vagrant
         # Merge the configuration and assign it as the VM configuration
         config = merge_configs(Config::V1::Structure.new, *configs)
         @config_by_vm[name] = config
-        @logger.debug("Merged VM config: #{config.inspect}")
+        @logger.debug("Merged '#{name}' VM config: #{config.inspect}")
       end
     end
 
