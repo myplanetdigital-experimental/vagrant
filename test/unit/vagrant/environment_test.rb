@@ -127,7 +127,7 @@ VF
       end
 
       env = environment.create_vagrant_env
-      env.config.global.vagrant.dotfile_name.should == "foo"
+      env.config[:default]["vagrant"]["dotfile_name"].should == "foo"
     end
 
     it "should load from a custom Vagrantfile" do
@@ -140,7 +140,7 @@ VF
       end
 
       env = environment.create_vagrant_env(:vagrantfile_name => "non_standard_name")
-      env.config.global.vagrant.dotfile_name.should == "custom"
+      env.config[:default]["vagrant"]["dotfile_name"].should == "custom"
     end
 
     it "should load VM configuration" do
@@ -153,7 +153,7 @@ VF
       end
 
       env = environment.create_vagrant_env
-      env.config.for_vm(:default).vm.name.should == :default
+      env.config[:default]["id"].should == "default"
     end
 
     it "should load VM configuration with multiple VMs" do

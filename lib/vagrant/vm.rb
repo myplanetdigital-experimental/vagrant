@@ -19,7 +19,7 @@ module Vagrant
       @vm     = nil
       @env    = env
       @config = config
-      @box    = env.boxes.find(config.vm.box)
+      @box    = env.boxes.find(config["vm"]["box"])
 
       opts ||= {}
       if opts[:base]
@@ -45,7 +45,7 @@ module Vagrant
     #
     # **This method should never be called manually.**
     def load_guest!(guest=nil)
-      guest ||= config.vm.guest
+      guest ||= config["vm"]["guest"]
       @logger.info("Loading guest: #{guest}")
 
       if guest.is_a?(Class)

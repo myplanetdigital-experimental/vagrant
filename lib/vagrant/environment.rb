@@ -108,7 +108,7 @@ module Vagrant
     # @return [Pathname]
     def dotfile_path
       return nil if !root_path
-      root_path.join(config.global.vagrant.dotfile_name)
+      root_path.join(@config_global["vagrant"]["dotfile_name"])
     end
 
     # Returns the collection of boxes for the environment.
@@ -178,8 +178,8 @@ module Vagrant
       # matters here, so please don't touch. Specifically: The symbol
       # check is done after the detect check because the symbol check
       # will return nil, and we don't want to trigger a detect load.
-      host_klass = config.global.vagrant.host
-      host_klass = Hosts.detect(Vagrant.hosts) if host_klass.nil? || host_klass == :detect
+      host_klass = config_global["vagrant"]["host"]
+      host_klass = Hosts.detect(Vagrant.hosts) if host_klass.nil? || host_klass == OmniConfig::UNSET_VALUE
       host_klass = Vagrant.hosts.get(host_klass) if host_klass.is_a?(Symbol)
 
       # If no host class is detected, we use the base class.
@@ -196,7 +196,7 @@ module Vagrant
         {
           :action_runner  => action_runner,
           :box_collection => boxes,
-          :global_config  => config.global,
+          :global_config  => @config_global,
           :host           => host,
           :root_path      => root_path,
           :tmp_path       => tmp_path,
@@ -296,6 +296,12 @@ module Vagrant
     # Config Methods
     #---------------------------------------------------------------
 
+    # The configuration that is global.
+    def config_global
+      load! if !loaded?
+      @config_global
+    end
+
     # The configuration by VM name. This will return a hash where the
     # key is the VM name (string) and the value is the configuration
     # (a Hash).
@@ -360,11 +366,14 @@ module Vagrant
                              config_by_source[:default],
                              config_by_source[:home],
                              config_by_source[:root])
+      @config_global = global["global"]
       @logger.debug(global.inspect)
 
       # If no sub-VMs were defined, we define a single default VM that has
       # no specific configuration.
-      global["vms"] << { "id" => DEFAULT_VM } if global["vms"].empty?
+      if global["vms"].empty?
+        global["vms"] << merge_configs(Config::V1::Structure.new, { "id" => DEFAULT_VM })
+      end
 
       # For each virtual machine represented by this environment, we have
       # to load the configuration again, taking into account the VM's
@@ -449,8 +458,8 @@ module Vagrant
       result = {}
 
       # Load all the virtual machine instances.
-      config.vms.each do |name|
-        result[name] = Vagrant::VM.new(name, self, config.for_vm(name))
+      config.each do |name, vm_config|
+        result[name] = Vagrant::VM.new(name, self, vm_config)
       end
 
       result
