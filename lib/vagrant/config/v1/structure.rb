@@ -79,6 +79,7 @@ module Vagrant
             s.define("shared_folders", OmniConfig::Type::List.new(shared_folder_type))
           end
 
+          define("id", OmniConfig::Type::String)
           define("nfs", nfs_type)
           define("package", package_type)
           define("ssh", ssh_type)

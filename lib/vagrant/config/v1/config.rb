@@ -12,17 +12,19 @@ module Vagrant
         attr_reader :vagrant
         attr_reader :vm
 
-        def initialize(subvm=false)
-          @subvm   = subvm
+        def initialize(id=nil)
+          @subvm   = !id.nil?
+          @id      = id
           @nfs     = NFSConfig.new
           @package = PackageConfig.new
           @ssh     = SSHConfig.new
           @vagrant = VagrantConfig.new
-          @vm      = VMConfig.new(subvm)
+          @vm      = VMConfig.new(@subvm)
         end
 
         def to_internal_structure
           current = {
+            "id"      => @id,
             "nfs"     => @nfs.to_internal_structure,
             "package" => @package.to_internal_structure,
             "ssh"     => @ssh.to_internal_structure,
@@ -182,7 +184,7 @@ module Vagrant
           options ||= {}
 
           # Configure the sub-VM.
-          config  = Config.new(true)
+          config  = Config.new(name)
           block.call(config) if block
 
           # Set some options on this
