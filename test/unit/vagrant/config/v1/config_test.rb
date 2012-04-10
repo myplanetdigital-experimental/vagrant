@@ -1,5 +1,7 @@
 require File.expand_path("../../../../base", __FILE__)
 
+require "omniconfig"
+
 require "vagrant/config/v1/config"
 
 describe Vagrant::Config::V1::Config do
@@ -35,28 +37,25 @@ describe Vagrant::Config::V1::VMConfig do
     instance.box = "foo"
     instance.box_url = "bar"
 
-    instance.to_internal_structure_flat.should == {
-      "box"     => "foo",
-      "box_url" => "bar",
-      "name"    => nil,
-      "primary" => nil
-    }
+    result = instance.to_internal_structure_flat
+    result["box"].should == "foo"
+    result["box_url"].should == "bar"
+    result["name"].should == OmniConfig::UNSET_VALUE
   end
 
-  it "converts a single VM to a proper internal structure" do
-    instance.box = "foo"
-    instance.box_url = "bar"
+  describe "to_internal_structure_vms" do
+    it "returns an empty list of VMs if there are none" do
+      instance.to_internal_structure_vms.should be_empty
+    end
 
-    instance.to_internal_structure.should == [instance.to_internal_structure_flat]
-  end
+    it "returns an array of defined sub-VMs" do
+      instance.define :foo
+      instance.define :bar
 
-  it "should convert multiple VMs into a proper internal structure" do
-    instance.define("foo")
-    instance.define("bar")
-
-    result = instance.to_internal_structure
-    result.length.should == 2
-    result[0]["name"].should == "foo"
-    result[1]["name"].should == "bar"
+      result = instance.to_internal_structure_vms
+      result.length.should == 2
+      result[0]["vm"]["name"].should == "foo"
+      result[1]["vm"]["name"].should == "bar"
+    end
   end
 end
