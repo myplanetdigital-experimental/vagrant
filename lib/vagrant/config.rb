@@ -6,13 +6,7 @@ module Vagrant
     autoload :HashWrapper,   'vagrant/config/hash_wrapper'
     autoload :Loader,        'vagrant/config/loader'
     autoload :ProcLoader,    'vagrant/config/proc_loader'
-    autoload :Top,           'vagrant/config/top'
-
-    autoload :NFSConfig,     'vagrant/config/nfs'
-    autoload :PackageConfig, 'vagrant/config/package'
-    autoload :SSHConfig,     'vagrant/config/ssh'
-    autoload :VagrantConfig, 'vagrant/config/vagrant'
-    autoload :VMConfig,      'vagrant/config/vm'
+    autoload :Structure,     'vagrant/config/structure'
 
     module V1
       autoload :Loader, 'vagrant/config/v1/loader'

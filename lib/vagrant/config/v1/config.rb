@@ -12,22 +12,37 @@ module Vagrant
         attr_reader :vagrant
         attr_reader :vm
 
-        def initialize
+        def initialize(subvm=false)
+          @subvm   = subvm
           @nfs     = NFSConfig.new
           @package = PackageConfig.new
           @ssh     = SSHConfig.new
           @vagrant = VagrantConfig.new
-          @vm      = VMConfig.new
+          @vm      = VMConfig.new(subvm)
         end
 
         def to_internal_structure
-          {
+          current = {
             "nfs"     => @nfs.to_internal_structure,
             "package" => @package.to_internal_structure,
             "ssh"     => @ssh.to_internal_structure,
             "vagrant" => @vagrant.to_internal_structure,
-            "vms"     => @vm.to_internal_structure
+            "vm"      => @vm.to_internal_structure_flat
           }
+
+          if @subvm
+            # If we represent a sub-VM configuration, then we return the
+            # internal structure with VM being just the single VM.
+            return current
+          else
+            # We are the top-level configuration object, so we need to return
+            # the "outer" being what we have here now along with an array of
+            # sub-VMs.
+            return {
+              "global" => current,
+              "vms"    => @vm.to_internal_structure_vms
+            }
+          end
         end
       end
 
@@ -35,6 +50,11 @@ module Vagrant
       class NFSConfig
         attr_accessor :map_uid
         attr_accessor :map_gid
+
+        def initialize
+          @map_uid = OmniConfig::UNSET_VALUE
+          @map_gid = OmniConfig::UNSET_VALUE
+        end
 
         def to_internal_structure
           {
@@ -47,6 +67,10 @@ module Vagrant
       # The `config.package` object.
       class PackageConfig
         attr_accessor :name
+
+        def initialize
+          @name = OmniConfig::UNSET_VALUE
+        end
 
         def to_internal_structure
           {
@@ -68,6 +92,20 @@ module Vagrant
         attr_accessor :forward_agent
         attr_accessor :forward_x11
         attr_accessor :shell
+
+        def initialize
+          @username = OmniConfig::UNSET_VALUE
+          @password = OmniConfig::UNSET_VALUE
+          @host     = OmniConfig::UNSET_VALUE
+          @port     = OmniConfig::UNSET_VALUE
+          @guest_port = OmniConfig::UNSET_VALUE
+          @max_tries  = OmniConfig::UNSET_VALUE
+          @timeout    = OmniConfig::UNSET_VALUE
+          @private_key_path = OmniConfig::UNSET_VALUE
+          @forward_agent = OmniConfig::UNSET_VALUE
+          @forward_x11   = OmniConfig::UNSET_VALUE
+          @shell    = OmniConfig::UNSET_VALUE
+        end
 
         def to_internal_structure
           {
@@ -91,6 +129,11 @@ module Vagrant
         attr_accessor :dotfile_name
         attr_accessor :host
 
+        def initialize
+          @dotfile_name = OmniConfig::UNSET_VALUE
+          @host         = OmniConfig::UNSET_VALUE
+        end
+
         def to_internal_structure
           {
             "dotfile_name" => @dotfile_name,
@@ -111,11 +154,24 @@ module Vagrant
         attr_accessor :host_name
         attr_accessor :primary
 
-        def initialize
+        # Initializes a new VM configurartion object. If `subvm` is
+        # set to true then this configuration represents a sub-VM.
+        def initialize(subvm=false)
+          @subvm = subvm
           @defined_vms = {}
           @defined_vms_order = []
           @forwarded_ports = []
           @shared_folders = {}
+
+          @name = OmniConfig::UNSET_VALUE
+          @auto_port_range = OmniConfig::UNSET_VALUE
+          @box = OmniConfig::UNSET_VALUE
+          @box_url = OmniConfig::UNSET_VALUE
+          @base_mac = OmniConfig::UNSET_VALUE
+          @boot_mode = OmniConfig::UNSET_VALUE
+          @guest = OmniConfig::UNSET_VALUE
+          @host_name = OmniConfig::UNSET_VALUE
+          @primary = OmniConfig::UNSET_VALUE
         end
 
         # Define a sub-VM. This takes a block which will be called
@@ -126,12 +182,12 @@ module Vagrant
           options ||= {}
 
           # Configure the sub-VM.
-          config  = self.class.new
+          config  = Config.new(true)
           block.call(config) if block
 
           # Set some options on this
-          config.name    = name
-          config.primary = true if options[:primary]
+          config.vm.name    = name
+          config.vm.primary = true if options[:primary]
 
           # Assign the VM and record the order that it was defined
           @defined_vms[name] = config
@@ -164,6 +220,7 @@ module Vagrant
           end
 
           @shared_folders[name] = {
+            "name"      => name,
             "guestpath" => guestpath.to_s,
             "hostpath" => hostpath.to_s,
             "create" => false,
@@ -193,26 +250,16 @@ module Vagrant
           }
         end
 
-        # Convert to the internal structure. This will return an array of
-        # virtual machine configurations; one for each defined virtual
-        # machine.
-        def to_internal_structure
-          vms = []
-          if @defined_vms.empty?
-            # We are the only VM. This is good.
-            vms << to_internal_structure_flat
-          else
-            # We have multiple VMs, so just get them in the array in the
-            # right order. Note that we don't deal with inheritance. In our
-            # view of the world, there is no such thing. Ruby Vagrantfiles
-            # do support inheritance however, and that is handled by the
-            # config loader itself.
-            @defined_vms_order.each do |name|
-              vms << @defined_vms[name].to_internal_structure_flat
-            end
-          end
+        # Construct a list of VMs that were created.
+        def to_internal_structure_vms
+          # If we have no sub-VMs we return an empty configuration because the
+          # global VM configuration is what is used.
+          return [] if @defined_vms_order.empty?
 
-          vms
+          # Return each of the sub-VM's configuration.
+          @defined_vms_order.map do |name|
+            @defined_vms[name].to_internal_structure
+          end
         end
       end
     end

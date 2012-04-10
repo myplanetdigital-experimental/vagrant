@@ -296,14 +296,14 @@ module Vagrant
     # Config Methods
     #---------------------------------------------------------------
 
-    # The configuration object represented by this environment. This
-    # will trigger the environment to load if it hasn't loaded yet (see
-    # {#load!}).
+    # The configuration by VM name. This will return a hash where the
+    # key is the VM name (string) and the value is the configuration
+    # (a Hash).
     #
-    # @return [Config::Container]
+    # @return [Hash]
     def config
       load! if !loaded?
-      @config
+      @config_by_vm
     end
 
     #---------------------------------------------------------------
@@ -345,87 +345,104 @@ module Vagrant
     # this environment, meaning that it will use the given root directory
     # to load the Vagrantfile into that context.
     def load_config!
-      # This stores all our procs by some key
-      procs = {}
-      #config_loader.load_order = [:default, :box, :home, :root, :vm]
+      # This stores the configuration for various sources. We later merge
+      # these configurations.
+      config_by_source = {}
 
       # The proc loader is responsible for loading procs from various
       # Vagrantfiles.
       proc_loader = Config::ProcLoader.new
-      procs[:default] = proc_loader.load(File.expand_path("config/default.rb", Vagrant.source_root))
 
-      if home_path && !procs.has_key?(:home)
+      # Get the default configuration
+      @logger.debug("Loading configuration from default Vagrantfile")
+      config_proc = proc_loader.load(File.expand_path("config/default.rb", Vagrant.source_root))
+      config_by_source[:default] = load_config_from_procs(config_proc)
+      @logger.debug(config_by_source[:default].inspect)
+
+      if home_path
         # Load the home Vagrantfile
         home_vagrantfile = find_vagrantfile(home_path)
-        procs[:home] = home_vagrantfile ? proc_loader.load(home_vagrantfile) : nil
-      end
-
-      if root_path && !procs.has_key?(:root)
-        # Load the Vagrantfile in this directory
-        root_vagrantfile = find_vagrantfile(root_path)
-        procs[:root] = root_vagrantfile ? proc_loader.load(root_vagrantfile) : nil
-      end
-
-      # Load the global configuration, which is the configuration not counting
-      # the possible needs of specific sub-vms.
-      load_order = [:default, :home, :root]
-      global = load_config_from_procs(procs, load_order)
-      @config = Config::Container.new(global, [])
-      return
-
-      # For each virtual machine represented by this environment, we have
-      # to load the configuration in two-passes. We do this because the
-      # first pass is used to determine the box for the VM. The second pass
-      # is used to also load the box Vagrantfile.
-      defined_vm_keys = global.vm.defined_vm_keys.dup
-      defined_vms     = global.vm.defined_vms.dup
-
-      # If this isn't a multi-VM environment, then setup the default VM
-      # to simply be our configuration.
-      if defined_vm_keys.empty?
-        defined_vm_keys << DEFAULT_VM
-        defined_vms[DEFAULT_VM] = Config::VMConfig::SubVM.new
-      end
-
-      vm_configs = defined_vm_keys.map do |vm_name|
-        @logger.debug("Loading configuration for VM: #{vm_name}")
-
-        subvm = defined_vms[vm_name]
-
-        # First pass, first run.
-        config = inner_load[subvm]
-
-        # Second pass, with the box
-        config = inner_load[subvm, boxes.find(config.vm.box)]
-        config.vm.name = vm_name
-
-        # Return the final configuration for this VM
-        config
-      end
-
-      # Finally, we have our configuration. Set it and forget it.
-      @config = Config::Container.new(global, vm_configs)
-    end
-
-    # Loads configuration from a set of procs in the given order. This is used
-    # internally and shouldn't be called by the general public in any circumstance.
-    #
-    # @param [Hash] procs Hash of procs.
-    # @param [Array] load_order Order to load the procs.
-    # @return [Hash]
-    def load_config_from_procs(procs, load_order)
-      # For now we assume version 1 configuration. This will need to be changed
-      # in the future.
-      loader = OmniConfig.new(Config::V1::Structure.new,
-                              :result_class => Config::HashWrapper)
-      load_order.each do |key|
-        (procs[key] || []).each do |_version, config_proc|
-          # We ignore the version for now.
-          loader.add_loader(Config::V1::Loader.new(config_proc))
+        if home_vagrantfile
+          @logger.debug("Loading configuration from: #{home_vagrantfile.to_s}")
+          config_proc = proc_loader.loader(home_vagrantfile)
+          config_by_source[:home] = load_config_from_procs(config_proc)
+          @logger.debug(config_by_source[:home].inspect)
         end
       end
 
-      # Return the result
+      if root_path
+        # Load the Vagrantfile in this directory
+        root_vagrantfile = find_vagrantfile(root_path)
+        if root_vagrantfile
+          @logger.debug("Loading configuration from: #{root_vagrantfile.to_s}")
+          config_proc = proc_loader.load(root_vagrantfile)
+          config_by_source[:root] = load_config_from_procs(config_proc)
+          @logger.debug(config_by_source[:root].inspect)
+        end
+      end
+
+      # Now that we have the set of configuration we can, we merged it all
+      # together in order to get a proper list of VMs.
+      @logger.debug("Loading global configuration...")
+      global = merge_configs(Config::Structure.new(Config::V1::Structure),
+                             config_by_source[:default],
+                             config_by_source[:home],
+                             config_by_source[:root])
+      @logger.debug(global.inspect)
+
+      # If no sub-VMs were defined, we define a single default VM that has
+      # no specific configuration.
+      global["vms"] << { "id" => DEFAULT_VM } if global["vms"].empty?
+
+      # For each virtual machine represented by this environment, we have
+      # to load the configuration again, taking into account the VM's
+      # box and the specific configuration for that VM.
+      @config_by_vm = {}
+      global["vms"].each do |vm_config|
+        name = (vm_config["name"] || DEFAULT_VM).to_sym
+
+        @logger.debug("Loading configuration for VM: #{name}...")
+        @logger.debug("Raw VM config: #{vm_config.inspect}")
+
+        # XXX: Get the box proc and load the config
+
+        configs = []
+        [:default, :home, :root].each do |type|
+          configs << config_by_source[type]["global"] if config_by_source[type]
+        end
+        configs << vm_config
+
+        config = merge_configs(Config::V1::Structure.new, *configs)
+        @config_by_vm[name] = config
+        @logger.debug("Merged VM config: #{config.inspect}")
+      end
+    end
+
+    # Loads configuration from a single proc for the given configuration version
+    # and returns it.
+    #
+    # @param [String] version Version of the configuration proc.
+    # @param [Proc] config_proc Configuration proc.
+    # @return [Hash]
+    def load_config_from_procs(procs)
+      # For now we assume version 1 configuration. This will need to be changed
+      # in the future when we support multiple verions.
+      loader = OmniConfig.new(Config::Structure.new(Config::V1::Structure.new))
+      procs.each do |_version, config_proc|
+        loader.add_loader(Config::V1::Loader.new(config_proc))
+      end
+      loader.load
+    end
+
+    # Merges a set of configurations of possibly different versions into a
+    # single final configuration value in the latest version possible.
+    def merge_configs(structure, *configs)
+      loader = OmniConfig.new(structure)
+      configs.each do |config|
+        if config
+          loader.add_loader(OmniConfig::Loader::Hash.new(config))
+        end
+      end
       loader.load
     end
 
