@@ -173,7 +173,7 @@ module Vagrant
           @boot_mode = OmniConfig::UNSET_VALUE
           @guest = OmniConfig::UNSET_VALUE
           @host_name = OmniConfig::UNSET_VALUE
-          @primary = OmniConfig::UNSET_VALUE
+          @primary = false
         end
 
         # Define a sub-VM. This takes a block which will be called

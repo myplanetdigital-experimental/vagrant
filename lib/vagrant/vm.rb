@@ -51,8 +51,8 @@ module Vagrant
       if guest.is_a?(Class)
         raise Errors::VMGuestError, :_key => :invalid_class, :guest => guest.to_s if !(guest <= Guest::Base)
         @guest = guest.new(self)
-      elsif guest.is_a?(Symbol)
-        guest_klass = Vagrant.guests.get(guest)
+      elsif guest.is_a?(String)
+        guest_klass = Vagrant.guests.get(guest.to_sym)
         raise Errors::VMGuestError, :_key => :unknown_type, :guest => guest.to_s if !guest_klass
         @guest = guest_klass.new(self)
       else
