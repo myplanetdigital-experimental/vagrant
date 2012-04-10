@@ -348,38 +348,10 @@ module Vagrant
       # This stores the configuration for various sources. We later merge
       # these configurations.
       config_by_source = {}
-
-      # The proc loader is responsible for loading procs from various
-      # Vagrantfiles.
-      proc_loader = Config::ProcLoader.new
-
-      # Get the default configuration
-      @logger.debug("Loading configuration from default Vagrantfile")
-      config_proc = proc_loader.load(File.expand_path("config/default.rb", Vagrant.source_root))
-      config_by_source[:default] = load_config_from_procs(config_proc)
-      @logger.debug(config_by_source[:default].inspect)
-
-      if home_path
-        # Load the home Vagrantfile
-        home_vagrantfile = find_vagrantfile(home_path)
-        if home_vagrantfile
-          @logger.debug("Loading configuration from: #{home_vagrantfile.to_s}")
-          config_proc = proc_loader.loader(home_vagrantfile)
-          config_by_source[:home] = load_config_from_procs(config_proc)
-          @logger.debug(config_by_source[:home].inspect)
-        end
-      end
-
-      if root_path
-        # Load the Vagrantfile in this directory
-        root_vagrantfile = find_vagrantfile(root_path)
-        if root_vagrantfile
-          @logger.debug("Loading configuration from: #{root_vagrantfile.to_s}")
-          config_proc = proc_loader.load(root_vagrantfile)
-          config_by_source[:root] = load_config_from_procs(config_proc)
-          @logger.debug(config_by_source[:root].inspect)
-        end
-      end
+      default_path = File.expand_path("config/default.rb", Vagrant.source_root)
+      config_by_source[:default] = find_and_load_vagrantfile(default_path)
+      config_by_source[:home] = find_and_load_vagrantfile(home_path) if home_path
+      config_by_source[:root] = find_and_load_vagrantfile(root_path) if root_path
 
       # Now that we have the set of configuration we can, we merged it all
       # together in order to get a proper list of VMs.
@@ -404,18 +376,44 @@ module Vagrant
         @logger.debug("Loading configuration for VM: #{name}...")
         @logger.debug("Raw VM config: #{vm_config.inspect}")
 
-        # XXX: Get the box proc and load the config
+        # Get the box proc
+        box_name = global["global"]["vm"]["box"]
+        box_name = vm_config["vm"]["box"] if !box_name || box_name == OmniConfig::UNSET_VALUE
+        box      = boxes.find(box_name)
+        box_config = nil
+        box_config = find_and_load_vagrantfile(box.directory) if box
 
+        # Build up the chain of configs we're going to merge
         configs = []
-        [:default, :home, :root].each do |type|
-          configs << config_by_source[type]["global"] if config_by_source[type]
+        [:default, :home, box_config, :root].each do |type|
+          type = config_by_source[type] if type.is_a?(Symbol)
+          next if !type
+          configs << type["global"]
         end
         configs << vm_config
 
+        # Merge the configuration and assign it as the VM configuration
         config = merge_configs(Config::V1::Structure.new, *configs)
         @config_by_vm[name] = config
         @logger.debug("Merged VM config: #{config.inspect}")
       end
+    end
+
+    # This finds the Vagrantfile in the given path and returns the
+    # procs associated with it.
+    #
+    # @param [String] path Path where to search for the Vagrantfile
+    # @return [Array]
+    def find_and_load_vagrantfile(path)
+      vagrantfile = path
+      vagrantfile = find_vagrantfile(path) if !File.file?(vagrantfile)
+      return nil if !vagrantfile
+
+      @logger.debug("Loading configuration from: #{vagrantfile.to_s}")
+      config_proc = Config::ProcLoader.new.load(vagrantfile)
+      result = load_config_from_procs(config_proc)
+      @logger.debug(result.inspect)
+      result
     end
 
     # Loads configuration from a single proc for the given configuration version
