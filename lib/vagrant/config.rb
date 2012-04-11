@@ -9,8 +9,12 @@ module Vagrant
     autoload :VersionedStructure, 'vagrant/config/versioned_structure'
 
     module V1
-      autoload :Keys,      'vagrant/config/v1/keys'
       autoload :Loader,    'vagrant/config/v1/loader'
+      autoload :NFS,       'vagrant/config/v1/nfs'
+      autoload :Package,   'vagrant/config/v1/package'
+      autoload :SSH,       'vagrant/config/v1/ssh'
+      autoload :Vagrant,   'vagrant/config/v1/vagrant'
+      autoload :VM,        'vagrant/config/v1/vm'
     end
 
     CONFIGURE_MUTEX = Mutex.new

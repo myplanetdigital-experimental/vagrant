@@ -174,11 +174,11 @@ Vagrant.commands.register(:suspend)      { Vagrant::Command::Suspend }
 Vagrant.commands.register(:up)           { Vagrant::Command::Up }
 
 # Register the built-in config keys
-Vagrant.config_keys["1"].register(:nfs) { Vagrant::Config::V1::Keys::NFS.new }
-Vagrant.config_keys["1"].register(:package) { Vagrant::Config::V1::Keys::Package.new }
-Vagrant.config_keys["1"].register(:ssh) { Vagrant::Config::V1::Keys::SSH.new }
-Vagrant.config_keys["1"].register(:vagrant) { Vagrant::Config::V1::Keys::Vagrant.new }
-Vagrant.config_keys["1"].register(:vm) { Vagrant::Config::V1::Keys::VM.new }
+Vagrant.config_keys["1"].register(:nfs) { Vagrant::Config::V1::NFS.new }
+Vagrant.config_keys["1"].register(:package) { Vagrant::Config::V1::Package.new }
+Vagrant.config_keys["1"].register(:ssh) { Vagrant::Config::V1::SSH.new }
+Vagrant.config_keys["1"].register(:vagrant) { Vagrant::Config::V1::Vagrant.new }
+Vagrant.config_keys["1"].register(:vm) { Vagrant::Config::V1::VM.new }
 
 # Register the built-in hosts
 Vagrant.hosts.register(:arch)    { Vagrant::Hosts::Arch }
