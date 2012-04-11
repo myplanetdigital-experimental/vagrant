@@ -8,7 +8,8 @@ module Vagrant
     autoload :Structure,     'vagrant/config/structure'
 
     module V1
-      autoload :Loader, 'vagrant/config/v1/loader'
+      autoload :Keys,      'vagrant/config/v1/keys'
+      autoload :Loader,    'vagrant/config/v1/loader'
       autoload :Structure, 'vagrant/config/v1/structure'
     end
 
