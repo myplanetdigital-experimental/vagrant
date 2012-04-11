@@ -10,8 +10,15 @@ module Vagrant
 
         define("id", OmniConfig::Type::String)
 
+        # Get the config keys that are on the version itself if they're
+        # available.
+        version_class = Vagrant::Config::VERSIONS.get(version)
+        version_class.config_keys.each do |key, type|
+          define(key, type)
+        end
+
         # Get the various parts from the config_keys registry.
-        Vagrant.config_keys[version].each do |key, type|
+        Vagrant.config_keys.each do |key, type|
           define(key, type)
         end
       end

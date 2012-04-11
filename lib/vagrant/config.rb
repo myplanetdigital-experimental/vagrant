@@ -7,14 +7,11 @@ module Vagrant
     autoload :ProcLoader,    'vagrant/config/proc_loader'
     autoload :Structure,     'vagrant/config/structure'
     autoload :VersionedStructure, 'vagrant/config/versioned_structure'
+    autoload :V1,            'vagrant/config/v1'
 
-    module V1
-      autoload :Loader,    'vagrant/config/v1/loader'
-      autoload :NFS,       'vagrant/config/v1/nfs'
-      autoload :Package,   'vagrant/config/v1/package'
-      autoload :SSH,       'vagrant/config/v1/ssh'
-      autoload :Vagrant,   'vagrant/config/v1/vagrant'
-      autoload :VM,        'vagrant/config/v1/vm'
+    # These are the available configuration versions.
+    VERSIONS = Registry.new do |r|
+      r.register("1") { V1 }
     end
 
     CONFIGURE_MUTEX = Mutex.new

@@ -111,20 +111,16 @@ module Vagrant
     @commands ||= Registry.new
   end
 
-  # Global registry of config keys that are available by configuration
-  # version number.
+  # Global registry of config keys that are available for configuration.
+  # These config keys are available regardless of the version of configuration.
   #
   # This registry is used to look up the keys for `config` objects.
   # For example, `config.vagrant` looks up the `:vagrant` config key
   # for the configuration class to use.
   #
-  # @return [Hash]
+  # @return [Registry]
   def self.config_keys
-    # Config keys is a hash where the key is the versin of the configuration
-    # and the value is a registry that stores all the structures.
-    @config_keys ||= Hash.new do |hash, key|
-      hash[key] = Registry.new
-    end
+    @config_keys ||= Registry.new
   end
 
   # Global registry of available host classes and shortcut symbols
@@ -172,13 +168,6 @@ Vagrant.commands.register(:"ssh-config") { Vagrant::Command::SSHConfig }
 Vagrant.commands.register(:status)       { Vagrant::Command::Status }
 Vagrant.commands.register(:suspend)      { Vagrant::Command::Suspend }
 Vagrant.commands.register(:up)           { Vagrant::Command::Up }
-
-# Register the built-in config keys
-Vagrant.config_keys["1"].register(:nfs) { Vagrant::Config::V1::NFS.new }
-Vagrant.config_keys["1"].register(:package) { Vagrant::Config::V1::Package.new }
-Vagrant.config_keys["1"].register(:ssh) { Vagrant::Config::V1::SSH.new }
-Vagrant.config_keys["1"].register(:vagrant) { Vagrant::Config::V1::Vagrant.new }
-Vagrant.config_keys["1"].register(:vm) { Vagrant::Config::V1::VM.new }
 
 # Register the built-in hosts
 Vagrant.hosts.register(:arch)    { Vagrant::Hosts::Arch }

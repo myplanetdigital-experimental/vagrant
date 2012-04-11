@@ -3,6 +3,15 @@ require File.expand_path("../../base", __FILE__)
 describe Vagrant::Registry do
   let(:instance) { described_class.new }
 
+  it "should yield itself" do
+    yielded = nil
+    result  = described_class.new do |value|
+      yielded = value
+    end
+
+    result.should eql(yielded)
+  end
+
   it "should return nil for nonexistent items" do
     instance.get("foo").should be_nil
   end

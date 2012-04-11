@@ -20,14 +20,7 @@ describe Vagrant do
   end
 
   it "has a registry for config keys" do
-    described_class.config_keys.should be_a(Hash)
-    v1_config = described_class.config_keys["1"]
-    v1_config.should be_a(Vagrant::Registry)
-
-    v2_config = described_class.config_keys["2"]
-    v2_config.should be_a(Vagrant::Registry)
-
-    v1_config.should_not eql(v2_config)
+    described_class.config_keys.should be_a(Vagrant::Registry)
   end
 
   it "has a registry for hosts" do

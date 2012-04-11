@@ -7,6 +7,7 @@ module Vagrant
     def initialize
       @actions = {}
       @results_cache = {}
+      yield self if block_given?
     end
 
     # Register a callable by key.
