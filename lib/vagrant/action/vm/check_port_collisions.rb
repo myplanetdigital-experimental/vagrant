@@ -62,7 +62,7 @@ module Vagrant
           # Get the auto port range and get rid of the used ports and
           # ports which are being used in other forwards so we're just
           # left with available ports.
-          range = @env[:vm].config.vm.auto_port_range.to_a
+          range = @env[:vm].config["vm"]["auto_port_range"]
           range -= @env[:vm].config.vm.forwarded_ports.collect { |opts| opts[:hostport].to_i }
           range -= existing_ports
 

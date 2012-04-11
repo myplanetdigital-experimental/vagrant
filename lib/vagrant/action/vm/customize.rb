@@ -7,7 +7,7 @@ module Vagrant
         end
 
         def call(env)
-          customizations = env[:vm].config.vm.customizations
+          customizations = env[:vm].config["vm"]["customizations"]
           if !customizations.empty?
             env[:ui].info I18n.t("vagrant.actions.vm.customize.running")
 

@@ -7,11 +7,11 @@ module Vagrant
         end
 
         def call(env)
-          box_name = env[:vm].config.vm.box
+          box_name = env[:vm].config["vm"]["box"]
           raise Errors::BoxNotSpecified if !box_name
 
           if !env[:box_collection].find(box_name)
-            box_url = env[:vm].config.vm.box_url
+            box_url = env[:vm].config["vm"]["box_url"]
             raise Errors::BoxSpecifiedDoesntExist, :name => box_name if !box_url
 
             # Add the box then reload the box collection so that it becomes

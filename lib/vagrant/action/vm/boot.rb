@@ -19,13 +19,13 @@ module Vagrant
 
         def boot
           @env[:ui].info I18n.t("vagrant.actions.vm.boot.booting")
-          @env[:vm].driver.start(@env[:vm].config.vm.boot_mode)
+          @env[:vm].driver.start(@env[:vm].config["vm"]["boot_mode"])
         end
 
         def wait_for_boot
           @env[:ui].info I18n.t("vagrant.actions.vm.boot.waiting")
 
-          @env[:vm].config.ssh.max_tries.to_i.times do |i|
+          @env[:vm].config["ssh"]["max_tries"].to_i.times do |i|
             if @env[:vm].channel.ready?
               @env[:ui].info I18n.t("vagrant.actions.vm.boot.ready")
               return true
