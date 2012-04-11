@@ -6,11 +6,11 @@ module Vagrant
     autoload :HashWrapper,   'vagrant/config/hash_wrapper'
     autoload :ProcLoader,    'vagrant/config/proc_loader'
     autoload :Structure,     'vagrant/config/structure'
+    autoload :VersionedStructure, 'vagrant/config/versioned_structure'
 
     module V1
       autoload :Keys,      'vagrant/config/v1/keys'
       autoload :Loader,    'vagrant/config/v1/loader'
-      autoload :Structure, 'vagrant/config/v1/structure'
     end
 
     CONFIGURE_MUTEX = Mutex.new
