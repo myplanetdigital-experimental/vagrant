@@ -410,52 +410,6 @@ module Vagrant
         @logger.debug("Merged '#{name}' VM config: #{config.inspect}")
       end
     end
-
-    # This finds the Vagrantfile in the given path and returns the
-    # procs associated with it.
-    #
-    # @param [String] path Path where to search for the Vagrantfile
-    # @return [Array]
-    def find_and_load_vagrantfile(path)
-      vagrantfile = path
-      vagrantfile = find_vagrantfile(path) if !File.file?(vagrantfile)
-      return nil if !vagrantfile
-
-      @logger.debug("Loading configuration from: #{vagrantfile.to_s}")
-      config_proc = Config::ProcLoader.new.load(vagrantfile)
-      result = load_config_from_procs(config_proc)
-      @logger.debug(result.inspect)
-      result
-    end
-
-    # Loads configuration from a single proc for the given configuration version
-    # and returns it.
-    #
-    # @param [String] version Version of the configuration proc.
-    # @param [Proc] config_proc Configuration proc.
-    # @return [Hash]
-    def load_config_from_procs(procs)
-      # For now we assume version 1 configuration. This will need to be changed
-      # in the future when we support multiple verions.
-      loader = OmniConfig.new(Config::Structure.new(versioned_config("1")))
-      procs.each do |_version, config_proc|
-        loader.add_loader(Config::V1::Loader.new(config_proc))
-      end
-      loader.load(false)
-    end
-
-    # Merges a set of configurations of possibly different versions into a
-    # single final configuration value in the latest version possible.
-    def merge_configs(structure, *configs)
-      loader = OmniConfig.new(structure)
-      configs.each do |config|
-        if config
-          loader.add_loader(OmniConfig::Loader::Hash.new(config))
-        end
-      end
-      loader.load(false)
-    end
-
     # Loads the persisted VM (if it exists) for this environment.
     def load_vms!
       result = {}
@@ -520,6 +474,23 @@ module Vagrant
       end
     end
 
+    # This finds the Vagrantfile in the given path and returns the
+    # procs associated with it.
+    #
+    # @param [String] path Path where to search for the Vagrantfile
+    # @return [Array]
+    def find_and_load_vagrantfile(path)
+      vagrantfile = path
+      vagrantfile = find_vagrantfile(path) if !File.file?(vagrantfile)
+      return nil if !vagrantfile
+
+      @logger.debug("Loading configuration from: #{vagrantfile.to_s}")
+      config_proc = Config::ProcLoader.new.load(vagrantfile)
+      result = load_config_from_procs(config_proc)
+      @logger.debug(result.inspect)
+      result
+    end
+
     # Finds the Vagrantfile in the given directory.
     #
     # @param [Pathname] path Path to search in.
@@ -533,6 +504,22 @@ module Vagrant
       nil
     end
 
+    # Loads configuration from a single proc for the given configuration version
+    # and returns it.
+    #
+    # @param [String] version Version of the configuration proc.
+    # @param [Proc] config_proc Configuration proc.
+    # @return [Hash]
+    def load_config_from_procs(procs)
+      # For now we assume version 1 configuration. This will need to be changed
+      # in the future when we support multiple verions.
+      loader = OmniConfig.new(Config::Structure.new(versioned_config("1")))
+      procs.each do |_version, config_proc|
+        loader.add_loader(Config::V1::Loader.new(config_proc))
+      end
+      loader.load(false)
+    end
+
     # Loads the Vagrant plugins by properly setting up RubyGems so that
     # our private gem repository is on the path.
     def load_plugins
@@ -543,6 +530,18 @@ module Vagrant
 
       # Load the plugins
       Plugin.load!
+    end
+
+    # Merges a set of configurations of possibly different versions into a
+    # single final configuration value in the latest version possible.
+    def merge_configs(structure, *configs)
+      loader = OmniConfig.new(structure)
+      configs.each do |config|
+        if config
+          loader.add_loader(OmniConfig::Loader::Hash.new(config))
+        end
+      end
+      loader.load(false)
     end
 
     # This returns a configuration structure for the given version.
