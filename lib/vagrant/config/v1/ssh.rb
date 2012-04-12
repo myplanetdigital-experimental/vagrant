@@ -23,7 +23,7 @@ module Vagrant
         end
 
         def validate(errors, value)
-          required = ["username", "password", "max_tries", "timeout"]
+          required = ["username", "host", "max_tries", "timeout"]
           required.each do |key|
             if value[key] == OmniConfig::UNSET_VALUE || !value[key]
               errors.add(I18n.t("vagrant.config.common.error_empty", :field => key))

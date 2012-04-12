@@ -1,5 +1,7 @@
 require "vagrant/util/template_renderer"
 
+require "omniconfig"
+
 module Vagrant
   module Config
     # This wraps the settings and provides dictionary access as well
