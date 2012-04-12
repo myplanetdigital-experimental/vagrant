@@ -79,6 +79,7 @@ module Vagrant
 
       @loaded = false
       @lock_acquired = false
+      @versioned_config = {}
 
       @logger = Log4r::Logger.new("vagrant::environment")
       @logger.info("Environment initialized (#{self})")
@@ -364,7 +365,7 @@ module Vagrant
       # Now that we have the set of configuration we can, we merged it all
       # together in order to get a proper list of VMs.
       @logger.debug("Loading global configuration...")
-      global = merge_configs(Config::Structure.new(Config::VersionedStructure.new("1")),
+      global = merge_configs(Config::Structure.new(versioned_config("1")),
                              config_by_source[:default],
                              config_by_source[:home],
                              config_by_source[:root])
@@ -374,7 +375,7 @@ module Vagrant
       # If no sub-VMs were defined, we define a single default VM that has
       # no specific configuration.
       if global["vms"].empty?
-        global["vms"] << merge_configs(Config::VersionedStructure.new("1"), { "id" => DEFAULT_VM })
+        global["vms"] << merge_configs(versioned_config("1"), { "id" => DEFAULT_VM })
       end
 
       # For each virtual machine represented by this environment, we have
@@ -404,7 +405,7 @@ module Vagrant
         configs << vm_config
 
         # Merge the configuration and assign it as the VM configuration
-        config = merge_configs(Config::VersionedStructure.new("1"), *configs)
+        config = merge_configs(versioned_config("1"), *configs)
         @config_by_vm[name] = config
         @logger.debug("Merged '#{name}' VM config: #{config.inspect}")
       end
@@ -436,11 +437,11 @@ module Vagrant
     def load_config_from_procs(procs)
       # For now we assume version 1 configuration. This will need to be changed
       # in the future when we support multiple verions.
-      loader = OmniConfig.new(Config::Structure.new(Config::VersionedStructure.new("1")))
+      loader = OmniConfig.new(Config::Structure.new(versioned_config("1")))
       procs.each do |_version, config_proc|
         loader.add_loader(Config::V1::Loader.new(config_proc))
       end
-      loader.load
+      loader.load(false)
     end
 
     # Merges a set of configurations of possibly different versions into a
@@ -452,7 +453,7 @@ module Vagrant
           loader.add_loader(OmniConfig::Loader::Hash.new(config))
         end
       end
-      loader.load
+      loader.load(false)
     end
 
     # Loads the persisted VM (if it exists) for this environment.
@@ -542,6 +543,19 @@ module Vagrant
 
       # Load the plugins
       Plugin.load!
+    end
+
+    # This returns a configuration structure for the given version.
+    # This method will properly returned cached versions if they've
+    # been loaded before.
+    #
+    # @return [Config::VersionedStructure]
+    def versioned_config(version)
+      if !@versioned_config.has_key?(version)
+        @versioned_config[version] = Config::VersionedStructure.new(self, version)
+      end
+
+      @versioned_config[version]
     end
   end
 end

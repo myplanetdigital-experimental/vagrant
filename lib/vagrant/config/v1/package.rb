@@ -4,8 +4,8 @@ module Vagrant
   module Config
     module V1
       class Package < OmniConfig::Structure
-        def initialize
-          super
+        def initialize(env)
+          super()
 
           define("name", OmniConfig::Type::String)
         end
