@@ -59,7 +59,7 @@ module Vagrant
           end
 
           errors.add(I18n.t("vagrant.config.vm.boot_mode_invalid")) if !["headless", "gui"].include?(value["boot_mode"])
-          errors.add(I18n.t("vagrant.config.vm.base_mac_invalid")) if @env.boxes.find(box) && !base_mac
+          errors.add(I18n.t("vagrant.config.vm.base_mac_invalid")) if @env.boxes.find(box) && !value["base_mac"]
 
 =begin
           shared_folders.each do |name, options|
