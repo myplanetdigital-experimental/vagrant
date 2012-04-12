@@ -20,7 +20,7 @@ module Vagrant
 
     # This is the method which is called by all Vagrantfiles to configure Vagrant.
     # This method expects a block which accepts a single argument representing
-    # an instance of the {Config::Top} class.
+    # an instance of the properly versioned configuration class.
     #
     # Note that the block is not run immediately. Instead, it's proc is stored
     # away for execution later.
