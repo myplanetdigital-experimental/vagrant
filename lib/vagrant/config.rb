@@ -7,6 +7,8 @@ module Vagrant
     autoload :ProcLoader,    'vagrant/config/proc_loader'
     autoload :Structure,     'vagrant/config/structure'
     autoload :VersionedStructure, 'vagrant/config/versioned_structure'
+    autoload :Wrapper,       'vagrant/config/wrapper'
+
     autoload :V1,            'vagrant/config/v1'
 
     # These are the available configuration versions.

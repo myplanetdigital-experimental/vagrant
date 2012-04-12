@@ -9,7 +9,7 @@ module Vagrant
         end
 
         def call(env)
-          env[:vm].config.validate!(env[:vm].env) if !env.has_key?("validate") || env["validate"]
+          env[:vm].config.validate! if !env.has_key?("validate") || env["validate"]
           @app.call(env)
         end
       end

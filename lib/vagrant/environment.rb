@@ -410,6 +410,7 @@ module Vagrant
         @logger.debug("Merged '#{name}' VM config: #{config.inspect}")
       end
     end
+
     # Loads the persisted VM (if it exists) for this environment.
     def load_vms!
       result = {}
@@ -534,11 +535,14 @@ module Vagrant
 
     # Merges a set of configurations of possibly different versions into a
     # single final configuration value in the latest version possible.
+    #
+    # @return [Config::Wrapper]
     def merge_configs(structure, *configs)
-      loader = OmniConfig.new(structure)
+      loader = OmniConfig.new(structure,
+                              :result_class => Config::Wrapper)
       configs.each do |config|
         if config
-          loader.add_loader(OmniConfig::Loader::Hash.new(config))
+          loader.add_loader(OmniConfig::Loader::Hash.new(config.to_hash))
         end
       end
       loader.load(false)
