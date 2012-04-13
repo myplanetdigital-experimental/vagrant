@@ -16,7 +16,7 @@ module Vagrant
         end
 
         def enabled_provisioners
-          @env[:vm].config["vm"]["provisioners"].each do |config|
+          @env[:vm].config["vm"]["provisioners"].map do |config|
             config["provisioner_class"].new(@env, config)
           end
         end
