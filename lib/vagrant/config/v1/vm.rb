@@ -39,6 +39,7 @@ module Vagrant
           define("guest", OmniConfig::Type::String)
           define("name", OmniConfig::Type::String)
           define("primary", OmniConfig::Type::Bool)
+          define("provisioners", OmniConfig::Type::List.new(ProvisionerStructure))
           define("shared_folders", OmniConfig::Type::List.new(shared_folder_type))
         end
 
