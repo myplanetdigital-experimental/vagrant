@@ -5,8 +5,7 @@ require "omniconfig"
 describe Vagrant::Config::ProvisionerStructure do
   include_context "unit"
 
-  let(:instance) { described_class.new(:registry => registry) }
-  let(:registry) { Vagrant::Registry.new }
+  let(:instance) { described_class.new }
 
   it "should raise a TypeError if the value is not a hash" do
     expect { instance.value(7) }.to raise_error(OmniConfig::TypeError)
@@ -28,11 +27,9 @@ describe Vagrant::Config::ProvisionerStructure do
       end
     end
 
-    registry.register(:foo) { provisioner_class }
-
-    result = instance.value("provisioner_type" => "foo")
+    result = instance.value("provisioner_class" => provisioner_class)
     result.should == {
-      "provisioner_type" => "foo",
+      "provisioner_class" => provisioner_class,
       "foo" => "bar"
     }
   end

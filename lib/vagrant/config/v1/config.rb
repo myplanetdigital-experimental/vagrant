@@ -163,6 +163,7 @@ module Vagrant
           @defined_vms = {}
           @defined_vms_order = []
           @forwarded_ports = []
+          @provisioners   = []
           @shared_folders = {}
 
           @name = OmniConfig::UNSET_VALUE
@@ -214,6 +215,32 @@ module Vagrant
           }.merge(options || {})
         end
 
+        def provision(name, options=nil, &block)
+          # The name can also be a class, so we just assume that to start
+          provisioner = name
+
+          # If the name is a symbol, then we attempt to get the class based on
+          # the registered provisioners.
+          provisioner = Vagrant.provisioners.get(name) if name.is_a?(Symbol)
+
+          # Create the configuration class
+          config_class = provisioner.config_v1_class
+          config = config_class.new
+
+          # Configure with the given options if given
+          if options
+            options.each do |key, value|
+              config.send("#{key}=", value)
+            end
+          end
+
+          # Configure with a block if given
+          block.call(config) if block
+
+          # Append the provisioner
+          @provisioners << config.to_internal_structure.merge("provisioner_class" => provisioner)
+        end
+
         def share_folder(name, guestpath, hostpath, options=nil)
           # Stringify the keys of the options hash
           options ||= {}
@@ -248,6 +275,7 @@ module Vagrant
             "guest"   => @guest,
             "host_name" => @host_name,
             "primary" => @primary,
+            "provisioners" => @provisioners,
             "shared_folders" => @shared_folders.values
           }
         end
