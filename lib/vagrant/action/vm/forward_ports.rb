@@ -31,8 +31,8 @@ module Vagrant
           # organize them by their guestport, taking the "last one wins"
           # approach.
           guest_port_mapping = {}
-          @env[:vm].config.vm.forwarded_ports.each do |options|
-            guest_port_mapping[options[:guestport]] = options
+          @env[:vm].config["vm"]["forwarded_ports"].each do |options|
+            guest_port_mapping[options["guestport"]] = options
           end
 
           # Return the values, since the order doesn't really matter
@@ -43,7 +43,7 @@ module Vagrant
         # 1024, which causes the forwarded ports to fail.
         def threshold_check(ports)
           ports.each do |options|
-            if options[:hostport] <= 1024
+            if options["guestport"] <= 1024
               @env[:ui].warn I18n.t("vagrant.actions.vm.forward_ports.privileged_ports")
               return
             end
@@ -57,9 +57,9 @@ module Vagrant
 
           mappings.each do |options|
             message_attributes = {
-              :guest_port => options[:guestport],
-              :host_port => options[:hostport],
-              :adapter => options[:adapter]
+              :guest_port => options["guestport"],
+              :host_port => options["hostport"],
+              :adapter => options["adapter"]
             }
 
             # Assuming the only reason to establish port forwarding is
@@ -78,7 +78,13 @@ module Vagrant
             end
 
             # Add the options to the ports array to send to the driver later
-            ports << options.merge(:name => options[:name], :adapter => options[:adapter])
+            ports << {
+              :name => options["name"],
+              :protocol => options["protocol"],
+              :hostport => options["hostport"],
+              :guestport => options["guestport"],
+              :adapter   => options["adapter"]
+            }
           end
 
           if !ports.empty?

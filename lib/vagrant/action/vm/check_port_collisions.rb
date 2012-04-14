@@ -27,11 +27,11 @@ module Vagrant
           end
 
           existing = env[:vm].driver.read_used_ports
-          env[:vm].config.vm.forwarded_ports.each do |options|
+          env[:vm].config["vm"]["forwarded_ports"].each do |options|
             # Use the proper port, whether that be the configured port or the
             # port that is currently on use of the VM.
-            hostport = options[:hostport].to_i
-            hostport = current[options[:name]] if current.has_key?(options[:name])
+            hostport = options["hostport"].to_i
+            hostport = current[options["name"]] if current.has_key?(options["name"])
 
             if existing.include?(hostport) || is_port_open?("localhost", hostport)
               # We have a collision! Handle it
@@ -50,38 +50,38 @@ module Vagrant
         # Handles a port collision by attempting to fix it.
         def handle_correct(options, existing_ports)
           # We need to keep this for messaging purposes
-          original_hostport = options[:hostport]
+          original_hostport = options["hostport"]
 
-          if !options[:auto]
+          if !options["auto"]
             # Auto fixing is disabled for this port forward, so we
             # must throw an error so the user can fix it.
-            raise Errors::ForwardPortCollision, :host_port => options[:hostport].to_s,
-                                                :guest_port => options[:guestport].to_s
+            raise Errors::ForwardPortCollision, :host_port => options["hostport"].to_s,
+                                                :guest_port => options["guestport"].to_s
           end
 
           # Get the auto port range and get rid of the used ports and
           # ports which are being used in other forwards so we're just
           # left with available ports.
           range = @env[:vm].config["vm"]["auto_port_range"]
-          range -= @env[:vm].config.vm.forwarded_ports.collect { |opts| opts[:hostport].to_i }
+          range -= @env[:vm].config["vm"]["forwarded_ports"].collect { |opts| opts["hostport"].to_i }
           range -= existing_ports
 
           if range.empty?
             raise Errors::ForwardPortAutolistEmpty, :vm_name => @env[:vm].name,
-                                                    :host_port => options[:hostport].to_s,
-                                                    :guest_port => options[:guestport].to_s
+                                                    :host_port => options["hostport"].to_s,
+                                                    :guest_port => options["guestport"].to_s
           end
 
           # Set the port up to be the first one and add that port to
           # the used list.
-          options[:hostport] = range.shift
-          existing_ports << options[:hostport]
+          options["hostport"] = range.shift
+          existing_ports << options["hostport"]
 
           # Notify the user
           @env[:ui].info(I18n.t("vagrant.actions.vm.forward_ports.fixed_collision",
                                 :host_port => original_hostport.to_s,
-                                :guest_port => options[:guestport].to_s,
-                                :new_port => options[:hostport]))
+                                :guest_port => options["guestport"].to_s,
+                                :new_port => options["hostport"]))
         end
       end
     end
