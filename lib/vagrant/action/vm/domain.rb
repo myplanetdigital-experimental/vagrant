@@ -21,11 +21,11 @@ module Vagrant
           domains = @env[:vm].config.vm.domains
           # replace domain if exist in /etc/hosts
           domains.split(' ').each do |domain|
-            system(%Q[sudo su root -c "sed -i 's/#{domain}/changedbyvagrant.#{domain}/g' /etc/hosts"])
+            system(%Q[sudo su root -c "sed -ibak 's/#{domain}/changedbyvagrant.#{domain}/g' /etc/hosts"])
           end
           ip = guest_ip
           # remove string with guest ip
-          system(%Q[sudo su root -c "sed -i '/#{ip}/d' /etc/hosts"])
+          system(%Q[sudo su root -c "sed -ibak '/#{ip}/d' /etc/hosts"])
           # string like 10.20.30.1 domain1.com domain2.com domain3.ru
           str = ip.to_s + ' ' + domains
           system(%Q[sudo su root -c "builtin echo -e '# VAGRANT-BEGIN' >> /etc/hosts"])
