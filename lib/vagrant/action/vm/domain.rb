@@ -28,9 +28,9 @@ module Vagrant
           system(%Q[sudo su root -c "sed -ibak '/#{ip}/d' /etc/hosts"])
           # string like 10.20.30.1 domain1.com domain2.com domain3.ru
           str = ip.to_s + ' ' + domains
-          system(%Q[sudo su root -c "builtin echo -e '# VAGRANT-BEGIN' >> /etc/hosts"])
-          system(%Q[sudo su root -c "builtin echo -e '#{str}' >> /etc/hosts"])
-          system(%Q[sudo su root -c "builtin echo -e '# VAGRANT-END' >> /etc/hosts"])
+          system(%Q[sudo su root -c "echo '# VAGRANT-BEGIN' >> /etc/hosts"])
+          system(%Q[sudo su root -c "echo '#{str}' >> /etc/hosts"])
+          system(%Q[sudo su root -c "echo '# VAGRANT-END' >> /etc/hosts"])
         end
 
         # Returns the IP address of the guest by looking at the first
