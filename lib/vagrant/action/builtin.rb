@@ -40,7 +40,7 @@ module Vagrant
             use VM::ForwardPorts
             use VM::Provision
             use VM::PruneNFSExports
-            use VM::Domain
+            use VM::DOMAIN
             use VM::NFS
             use VM::ClearSharedFolders
             use VM::ShareFolders
@@ -121,7 +121,7 @@ module Vagrant
             use registry.get(:halt), :force => true
             use VM::ProvisionerCleanup
             use VM::PruneNFSExports
-            use VM::PruneDomain
+            use VM::PruneDOMAIN
             use VM::Destroy
             use VM::CleanMachineFolder
             use VM::DestroyUnusedNetworkInterfaces
